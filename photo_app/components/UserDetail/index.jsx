@@ -3,6 +3,7 @@ import { Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 import "./styles.css";
+import fetchModel from "../../lib/fetchModelData.js";
 
 /**
  * Define UserDetail, a React component of CS142 Project 5.
@@ -11,17 +12,28 @@ class UserDetail extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      currUser: window.cs142models.userModel(this.props.match.params.userId),
+      currUser: null
     };
-    this.props.changeSecondaryTitle(`${this.state.currUser.first_name} ${this.state.currUser.last_name}`);
+    this.fetchUserDetails.call(this);
   }
 
   componentDidUpdate(prevProps){
     if(prevProps.match.params.userId !== this.props.match.params.userId){
-      this.setState({currUser: window.cs142models.userModel(this.props.match.params.userId)}, () => {
-        this.props.changeSecondaryTitle(`${this.state.currUser.first_name} ${this.state.currUser.last_name}`);
-      });
+      this.fetchUserDetails.call(this);
     }
+  }
+
+  fetchUserDetails(){
+    fetchModel(`/user/${this.props.match.params.userId}`).then((response) => {
+      this.setState({
+        currUser: response.data,
+      }, function(){
+        this.props.changeSecondaryTitle(`${this.state.currUser.first_name} ${this.state.currUser.last_name}`);
+      });      
+    }, (error) => {
+      console.log(error.message);
+      this.setState({currUser: null});
+    });
   }
 
   render() {

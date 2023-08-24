@@ -12,13 +12,18 @@
  */
 function fetchModel(url) {
   return new Promise(function (resolve, reject) {
-    console.log(url);
-    setTimeout(() => reject(new Error(
-      { status: 501, statusText: "Not Implemented" })), 
-      0
-    );
-    // On Success return:
-    // resolve({data: getResponseObject});
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.send();
+    xhr.responseType = "json";
+    xhr.onload = () => {
+      if(xhr.readyState === 4 && xhr.status === 200){
+        resolve({data: xhr.response});
+      }
+      else{
+        reject(new Error(`${xhr.status}: ${xhr.statusText}`));
+      }
+    };
   });
 }
 

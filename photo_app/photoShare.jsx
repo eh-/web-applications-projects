@@ -8,6 +8,7 @@ import TopBar from "./components/TopBar";
 import UserDetail from "./components/UserDetail";
 import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
+import fetchModel from "./lib/fetchModelData.js";
 
 class PhotoShare extends React.Component {
   constructor(props) {
@@ -15,10 +16,17 @@ class PhotoShare extends React.Component {
 
     this.state = {
       secondaryTitle: "",
-      version: window.cs142models.schemaInfo().__v,
+      version: "",
     };
     
     this.changeSecondaryTitle = this.changeSecondaryTitle.bind(this);
+
+    fetchModel("/test/info").then((response) => {
+      this.setState({version: response.data.__v});
+    }, (error) => {
+      console.log(error.message);
+      this.setState({version: ""});
+    });
   }
 
   changeSecondaryTitle(newSecondaryTitle){

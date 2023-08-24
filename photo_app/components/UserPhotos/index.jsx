@@ -10,6 +10,7 @@ import {
 import { Link } from "react-router-dom";
 
 import "./styles.css";
+import fetchModel from "../../lib/fetchModelData.js";
 
 /**
  * Define UserPhotos, a React component of CS142 Project 5.
@@ -19,21 +20,35 @@ class UserPhotos extends React.Component {
     super(props);
 
     this.state = {
-      photosOfUser: window.cs142models.photoOfUserModel(this.props.match.params.userId),
-      userInfo: window.cs142models.userModel(this.props.match.params.userId),
+      photosOfUser: null,
+      userInfo: null,
     };
-    this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
+
+    this.fetchUserPhotosInfo.call(this);
   }
 
   componentDidUpdate(prevProps){
     if(prevProps.match.params.userId !== this.props.match.params.userId){
-      this.setState({
-        photosOfUser: window.cs142models.photoOfUserModel(this.props.match.params.userId),
-        userInfo: window.cs142models.userModel(this.props.match.params.userId),
-      }, () => {
-        this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
-      });
+      this.fetchUserPhotosInfo.call(this);
     }
+  }
+
+  fetchUserPhotosInfo(){
+    fetchModel(`/photosOfUser/${this.props.match.params.userId}`).then((photos) => {
+      fetchModel(`/user/${this.props.match.params.userId}`).then((user) => {
+        this.setState({photosOfUser: photos.data, userInfo: user.data,}, () => {
+          if(this.state.userInfo){
+            this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
+          }
+        });
+      }, (error) =>{
+        console.log(error.message);
+        this.setState({photosOfUser: null, userInfo: null,});
+      });
+    }, (error) => {
+      console.log(error.message);
+      this.setState({photosOfUser: null, userInfo: null,});
+    });
   }
 
   render() {
