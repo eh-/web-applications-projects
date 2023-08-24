@@ -23,6 +23,7 @@ class Example extends React.Component {
     // variable 'name'.
     this.state = {
       name: window.cs142models.exampleModel().name,
+      motto:window.cs142models.exampleModel().motto,
       counter: 0,
       inputValue: "",
       buttonWasClicked: "",
@@ -103,7 +104,9 @@ class Example extends React.Component {
         <h1>CS142 Project 4 React.js Example</h1>
 
         <div className="motto-update">
-          {/* Your Problem 1 motto displaying and updating widget goes here */}
+          <p>
+            {this.state.name} {this.state.motto} 
+          </p>
         </div>
 
         <p>

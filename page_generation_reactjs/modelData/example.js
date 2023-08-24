@@ -16,6 +16,7 @@ if (cs142models === undefined) {
 
 cs142models.exampleModel = function () {
   return {
-    name: "Unknown Name",
+    name: "eh",
+    motto: "Hello World foobar",
   };
 };
