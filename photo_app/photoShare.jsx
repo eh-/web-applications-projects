@@ -12,6 +12,17 @@ import UserPhotos from "./components/UserPhotos";
 class PhotoShare extends React.Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      secondaryTitle: "",
+      version: window.cs142models.schemaInfo().__v,
+    };
+    
+    this.changeSecondaryTitle = this.changeSecondaryTitle.bind(this);
+  }
+
+  changeSecondaryTitle(newSecondaryTitle){
+    this.setState({secondaryTitle: newSecondaryTitle});
   }
 
   render() {
@@ -20,7 +31,7 @@ class PhotoShare extends React.Component {
         <div>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <TopBar />
+              <TopBar secondaryTitle={this.state.secondaryTitle} version={this.state.version}/>
             </Grid>
             <div className="cs142-main-topbar-buffer" />
             <Grid item sm={3}>
@@ -52,13 +63,16 @@ class PhotoShare extends React.Component {
                   />
                   <Route
                     path="/users/:userId"
-                    render={(props) => <UserDetail {...props} />}
+                    render={(props) => <UserDetail {...props} changeSecondaryTitle={this.changeSecondaryTitle} />}
                   />
                   <Route
                     path="/photos/:userId"
-                    render={(props) => <UserPhotos {...props} />}
+                    render={(props) => <UserPhotos {...props} changeSecondaryTitle={this.changeSecondaryTitle} />}
                   />
-                  <Route path="/users" component={UserList} />
+                  <Route
+                    path="/users"
+                    render={(props) => <UserList {...props} changeSecondaryTitle={this.changeSecondaryTitle}/>}
+                  />
                 </Switch>
               </Paper>
             </Grid>

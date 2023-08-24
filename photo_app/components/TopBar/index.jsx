@@ -15,9 +15,14 @@ class TopBar extends React.Component {
     return (
       <AppBar className="cs142-topbar-appBar" position="absolute">
         <Toolbar>
-          <Typography variant="h5" color="inherit">
-            This is the TopBar component
-          </Typography>
+          <Typography variant="h5" color="inherit" sx={{ flexGrow: 1 }}>
+            EH Photo App Version {" "} {this.props.version}
+          </Typography> 
+            {this.props.secondaryTitle && (
+            <Typography variant="h5" color="inherit">
+              {this.props.secondaryTitle}
+            </Typography>
+            )}
         </Toolbar>
       </AppBar>
     );
