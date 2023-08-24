@@ -9,14 +9,38 @@ import "./styles.css";
 class States extends React.Component {
   constructor(props) {
     super(props);
-    console.log(
-      "window.cs142models.statesModel()",
-      window.cs142models.statesModel()
-    );
+    
+    this.state={
+      statesModel: window.cs142models.statesModel(),
+      searchText: "",
+    };
+
+    this.handleSearchTextChange = this.handleSearchTextChange.bind(this);
+  }
+
+  handleSearchTextChange(event){
+    this.setState({searchText: event.target.value});
   }
 
   render() {
-    return <div>Replace this with the code for CS142 Project 4, Problem 2</div>;
+    let statesFound = [];
+    if(this.state.searchText){
+      statesFound = this.state.statesModel.filter(state => state.toLowerCase().includes(this.state.searchText.toLowerCase()));
+    }
+    return (
+    <div>
+      <label className="cs142-states-input-section"> Display States: &nbsp;
+        <input id="searchText" onChange={this.handleSearchTextChange}></input>
+      </label>
+      {this.state.searchText && 
+        (
+        <div className="cs142-states-result">
+          <p>States with: {this.state.searchText}</p>
+          {statesFound.length === 0 ? <p>No matching states</p> : <ul>{statesFound.map((s) => <li key={s}>{s}</li>)}</ul>}
+        </div>
+        )}
+    </div>
+    );
   }
 }
 
