@@ -2,13 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Grid, Typography, Paper } from "@mui/material";
 import { HashRouter, Route, Switch } from "react-router-dom";
+import axios from 'axios';
 
 import "./styles/main.css";
 import TopBar from "./components/TopBar";
 import UserDetail from "./components/UserDetail";
 import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
-import axios from 'axios';
 
 class PhotoShare extends React.Component {
   constructor(props) {
