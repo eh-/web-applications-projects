@@ -39,6 +39,10 @@ const async = require("async");
 const express = require("express");
 const app = express();
 
+const session = require("express-session");
+const bodyParser = require("body-parser");
+const multer = require("multer");
+
 // Load the Mongoose schema for User, Photo, and SchemaInfo
 const User = require("./schema/user.js");
 const Photo = require("./schema/photo.js");
@@ -47,6 +51,10 @@ const SchemaInfo = require("./schema/schemaInfo.js");
 // XXX - Your submission should work without this line. Comment out or delete
 // this line for tests and before submission!
 //const cs142models = require("./modelData/photoApp.js").cs142models;
+
+app.use(session({secret: "secretKey", resave: false, saveUninitialized: false}));
+app.use(bodyParser.json());
+
 mongoose.set("strictQuery", false);
 mongoose.connect("mongodb://127.0.0.1/cs142project6", {
   useNewUrlParser: true,
@@ -143,6 +151,10 @@ app.get("/test/:p1", function (request, response) {
  * URL /user/list - Returns all the User objects.
  */
 app.get("/user/list", function (request, response) {
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
   User.find({}, function(err, info){
     if (err) {
       console.error("Error in /user/:", err);
@@ -166,6 +178,10 @@ app.get("/user/list", function (request, response) {
  * URL /user/:id - Returns the information for User (id).
  */
 app.get("/user/:id", function (request, response) {
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
   const id = request.params.id;
   User.find({_id: id}, function(err, info){
     if (err) {
@@ -199,6 +215,10 @@ app.get("/user/:id", function (request, response) {
  * URL /photosOfUser/:id - Returns the Photos for User (id).
  */
 app.get("/photosOfUser/:id", function (request, response) {
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
   const id = request.params.id;
   User.find({}, function(userErr, users){
     if(userErr){
@@ -253,6 +273,70 @@ app.get("/photosOfUser/:id", function (request, response) {
       console.log("Photos found:", photosFound);
       response.end(JSON.stringify(photosFound));
     });
+  });
+});
+
+app.post("/admin/login", function(request, response){
+  User.find({login_name: request.body.login_name}, function(err, users){
+    if(err){
+      console.log("Error in login:", err);
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    if(users.length === 0){
+      console.log("Not found");
+      response.status(400).send("Login name doesn't exist");
+      return;
+    }
+    request.session.user_id = users[0]._id;
+    request.session.first_name = users[0].first_name;
+    response.send(JSON.stringify({
+      _id: users[0]._id,
+      first_name: users[0].first_name,
+    }));
+  });
+});
+
+app.post("/admin/logout", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(400).send("No user logged in");
+    return;
+  }
+  request.session.destroy(function(err){
+    if(err){
+      console.log(err);
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    response.status(200).send("Logged out successfully");
+  });
+});
+
+app.post("/user", function(request, response){
+  if(request.body.login_name === ""){
+    response.status(400).send("Missing required fields");
+    return;
+  }
+  User.exists({login_name: request.body.login_name}).then(function(found){
+    if(found){
+      response.status(400).send("Login name already in use");
+      return;
+    }
+    User.create({
+      first_name: request.body.first_name,
+      last_name: request.body.last_name,
+      location: request.body.location,
+      description: request.body.description,
+      occupation: request.body.occupation,
+      login_name: request.body.login_name,
+      password: request.body.password,
+    }).then(function(user_obj){
+      response.status(200).send(JSON.stringify({login_name: user_obj.login_name}));
+    }).catch(function(err){
+      response.status(500).send(JSON.stringify(err));
+    });
+  }).catch(function(err){
+    response.status(500).send(JSON.stringify(err));
   });
 });
 

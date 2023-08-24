@@ -26,12 +26,23 @@ class UserList extends React.Component {
       users:[],
     };
 
+    this.getUserList = this.getUserList.bind(this);
+    this.getUserList();
+  }
+
+  getUserList(){
     axios.get("/user/list").then(response => {
       this.setState({users: response.data});
-    }).catch(error => {
-      console.log(`${error.status}: ${error.response}`);
+    }).catch(err => {
+      console.log(`${err.response.status}: ${err.response.data}`);
       this.setState({users: []});
     });
+  }
+
+  componentDidUpdate(prevProps){
+    if(prevProps.loggedInUser !== this.props.loggedInUser){
+      this.getUserList();
+    }
   }
 
   render() {
