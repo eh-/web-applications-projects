@@ -1,0 +1,16 @@
+body{
+    font-family: Tahoma;
+    font-size: 20px;
+}
+
+table{
+    cursor: default;
+}
+
+.clickable{
+    cursor: pointer;
+}
+
+.dimmed{
+    color: lightgray;
+}
