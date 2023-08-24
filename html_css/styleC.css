@@ -1,0 +1,16 @@
+div{
+    height: 100px;
+    width: 100px;
+
+    font-family: Tahoma;
+    font-size: 40px;
+}
+
+.color_one{
+    background: linear-gradient(blue, pink);
+    transition: 1s 1s;
+}
+
+.color_one:hover{
+    font-size: 20px;
+}

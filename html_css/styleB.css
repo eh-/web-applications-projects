@@ -1,0 +1,35 @@
+body{
+    display: inline-block;
+    white-space: nowrap;
+}
+
+div{
+    background-color: #eeeff2;
+    height: 140px;
+    width: 90px;
+
+    font-family: Tahoma;
+    font-size: 40px;
+
+    
+
+    padding: 10px 0 0 10px;
+    border: dotted #D0D0FF;
+    border-width: 0 0 0 10px;
+    margin: 10px 0 0 10px;
+}
+
+div:hover{
+    background-color: yellow;
+    color: goldenrod;
+    cursor: pointer;
+}
+
+.inline_block{
+    display: inline-block;
+}
+
+.last_div{
+    position: fixed;
+    bottom: 10px; right: 10px;
+}
