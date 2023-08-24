@@ -3,7 +3,7 @@ import { Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 import "./styles.css";
-import fetchModel from "../../lib/fetchModelData.js";
+import axios from 'axios';
 
 /**
  * Define UserDetail, a React component of CS142 Project 5.
@@ -24,13 +24,13 @@ class UserDetail extends React.Component {
   }
 
   fetchUserDetails(){
-    fetchModel(`/user/${this.props.match.params.userId}`).then((response) => {
+    axios.get(`/user/${this.props.match.params.userId}`).then(response => {
       this.setState({
         currUser: response.data,
       }, function(){
         this.props.changeSecondaryTitle(`${this.state.currUser.first_name} ${this.state.currUser.last_name}`);
-      });      
-    }, (error) => {
+      });
+    }).catch(error => {
       console.log(error.message);
       this.setState({currUser: null});
     });

@@ -10,7 +10,7 @@ import {
 import { Link } from "react-router-dom";
 
 import "./styles.css";
-import fetchModel from "../../lib/fetchModelData.js";
+import axios from 'axios';
 
 /**
  * Define UserPhotos, a React component of CS142 Project 5.
@@ -34,20 +34,20 @@ class UserPhotos extends React.Component {
   }
 
   fetchUserPhotosInfo(){
-    fetchModel(`/photosOfUser/${this.props.match.params.userId}`).then((photos) => {
-      fetchModel(`/user/${this.props.match.params.userId}`).then((user) => {
-        this.setState({photosOfUser: photos.data, userInfo: user.data,}, () => {
+    axios.get(`/photosOfUser/${this.props.match.params.userId}`).then(photos => {
+      axios.get(`/user/${this.props.match.params.userId}`).then(user => {
+        this.setState({photosOfUser: photos.data, userInfo: user.data}, () => {
           if(this.state.userInfo){
             this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
           }
         });
-      }, (error) =>{
+      }).catch(error => {
         console.log(error.message);
-        this.setState({photosOfUser: null, userInfo: null,});
+        this.setState({photosOfUser: null, userInfo: null});
       });
-    }, (error) => {
+    }).catch(error => {
       console.log(error.message);
-      this.setState({photosOfUser: null, userInfo: null,});
+      this.setState({photosOfUser: null, userInfo: null});
     });
   }
 

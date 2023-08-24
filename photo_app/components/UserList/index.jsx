@@ -9,7 +9,7 @@ import {
 import { Link } from "react-router-dom";
 
 import "./styles.css";
-import fetchModel from "../../lib/fetchModelData.js";
+import axios from 'axios';
 
 /**
  * Define UserList, a React component of CS142 Project 5.
@@ -26,9 +26,9 @@ class UserList extends React.Component {
       users:[],
     };
 
-    fetchModel("/user/list").then((response) => {
+    axios.get("/user/list").then(response => {
       this.setState({users: response.data});
-    }, (error) => {
+    }).catch(error => {
       console.log(`${error.status}: ${error.response}`);
       this.setState({users: []});
     });

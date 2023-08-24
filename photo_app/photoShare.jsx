@@ -8,7 +8,7 @@ import TopBar from "./components/TopBar";
 import UserDetail from "./components/UserDetail";
 import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
-import fetchModel from "./lib/fetchModelData.js";
+import axios from 'axios';
 
 class PhotoShare extends React.Component {
   constructor(props) {
@@ -21,9 +21,9 @@ class PhotoShare extends React.Component {
     
     this.changeSecondaryTitle = this.changeSecondaryTitle.bind(this);
 
-    fetchModel("/test/info").then((response) => {
-      this.setState({version: response.data.__v});
-    }, (error) => {
+    axios.get("/test/info").then(response => {
+      this.setState({version: response.data.version});
+    }).catch(error => {
       console.log(error.message);
       this.setState({version: ""});
     });
