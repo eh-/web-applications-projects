@@ -20,6 +20,8 @@ class PhotoShare extends React.Component {
       loggedInUser: null,
       uploaded_new_photo: false,
     };
+
+    const first_link = window.location.href;
     
     this.changeSecondaryTitle = this.changeSecondaryTitle.bind(this);
     this.setLoggedInUser = this.setLoggedInUser.bind(this);
@@ -27,7 +29,14 @@ class PhotoShare extends React.Component {
     this.uploadedPhoto = this.uploadedPhoto.bind(this);
 
     axios.get("/test/info").then(response => {
-      this.setState({version: response.data.version});
+      if(response.data.loggedInUser){
+        this.setState({loggedInUser: response.data.loggedInUser, version: response.data.version},() => {
+          window.location.replace(first_link);
+        });
+      }
+      else{
+        this.setState({version: response.data.version});
+      }
     }).catch(error => {
       console.log(error.message);
       this.setState({version: ""});
@@ -62,7 +71,7 @@ class PhotoShare extends React.Component {
         <div>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-            <TopBar 
+              <TopBar 
                 secondaryTitle={this.state.secondaryTitle} 
                 version={this.state.version} 
                 loggedInUser={this.state.loggedInUser}

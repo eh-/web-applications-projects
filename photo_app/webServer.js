@@ -109,9 +109,20 @@ app.get("/test/:p1", function (request, response) {
         return;
       }
 
+      const schemaInfo = {
+        version: info[0].version,
+        load_date_time: info[0].load_date_time,
+      };
+      if(request.session.user_id){
+        schemaInfo.loggedInUser = {
+          _id: request.session.user_id,
+          first_name: request.session.first_name,
+        };
+      }
+
       // We got the object - return it in JSON format.
-      console.log("SchemaInfo", info[0]);
-      response.end(JSON.stringify(info[0]));
+      console.log("SchemaInfo", schemaInfo);
+      response.end(JSON.stringify(schemaInfo));
     });
   } else if (param === "counts") {
     // In order to return the counts of all the collections we need to do an
