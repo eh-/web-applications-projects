@@ -312,6 +312,36 @@ app.post("/admin/logout", function(request, response){
   });
 });
 
+app.post("/commentsOfPhoto/:photo_id", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  if(request.body.comment === ""){
+    response.status(400).send("Comment is empty");
+    return;
+  }
+  const newComment = {
+    comment: request.body.comment,
+    user_id: request.session.user_id,
+  };
+  Photo.findById(request.params.photo_id, function(err, photo){
+    if(err){
+      response.status(400).send(JSON.stringify(err));
+      return;
+    }
+    Photo.findByIdAndUpdate(request.params.photo_id, {
+      comments: [...photo.comments, newComment],
+    }, function(err2){
+      if(err2){
+        response.status(500).send(JSON.stringify(err2));
+        return;
+      }
+      response.status(200).send("Comment added");
+    });
+  });
+});
+
 app.post("/user", function(request, response){
   if(request.body.login_name === ""){
     response.status(400).send("Missing required fields");

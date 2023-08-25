@@ -6,6 +6,13 @@ import {
   CardHeader, 
   CardMedia, 
   CardContent, 
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  Alert,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 
@@ -22,9 +29,19 @@ class UserPhotos extends React.Component {
     this.state = {
       photosOfUser: null,
       userInfo: null,
+      dialog_open: false,
+      photo_id_dialog: null,
+      new_comment_text: "",
+      new_comment_error: "",
     };
 
-    this.fetchUserPhotosInfo.call(this);
+    this.fetchUserPhotosInfo = this.fetchUserPhotosInfo.bind(this);
+    this.handleClickOpen = this.handleClickOpen.bind(this);
+    this.handleClickCancel = this.handleClickCancel.bind(this);
+    this.handleClickSave = this.handleClickSave.bind(this);
+    this.updateNewCommentText = this.updateNewCommentText.bind(this);
+    
+    this.fetchUserPhotosInfo();
   }
 
   componentDidUpdate(prevProps){
@@ -41,14 +58,41 @@ class UserPhotos extends React.Component {
             this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
           }
         });
-      }).catch(error => {
-        console.log(error.message);
+      }).catch(err => {
+        console.log(`${err.response.status}: ${err.response.data}`);
         this.setState({photosOfUser: null, userInfo: null});
       });
-    }).catch(error => {
-      console.log(error.message);
+    }).catch(err => {
+      console.log(`${err.response.status}: ${err.response.data}`);
       this.setState({photosOfUser: null, userInfo: null});
     });
+  }
+
+  handleClickOpen(photo_id){
+    this.setState({dialog_open: true, photo_id_dialog: photo_id, new_comment_text: "", new_comment_error: ""});
+  }
+
+  handleClickCancel(){
+    this.setState({dialog_open: false, photo_id_dialog: null, new_comment_text: "", new_comment_error: ""});
+  }
+
+  handleClickSave(){
+    if(this.state.new_comment_text === ""){
+      this.setState({new_comment_error: "Comment is empty"});
+      return;
+    }
+    axios.post(`/commentsOfPhoto/${this.state.photo_id_dialog}`, {
+      comment: this.state.new_comment_text,
+    }).then(() => {
+      this.setState({dialog_open: false, photo_id_dialog: null, new_comment_text: "", new_comment_error: ""}, this.fetchUserPhotosInfo);
+    }).catch(err => {
+      console.log(`${err.response.status}: ${err.response.data}`);
+      this.setState({new_comment_error: err.response.data});
+    });
+  }
+
+  updateNewCommentText(event){
+    this.setState({new_comment_text: event.target.value});
   }
 
   render() {
@@ -78,8 +122,35 @@ class UserPhotos extends React.Component {
                     </Grid>
                   ))}
                 </Typography>
+                <Button variant="outlined" onClick={() => this.handleClickOpen(photo._id)}>
+                  Add Comment
+                </Button>
               </CardContent>
             </Card>
+            <Dialog fullWidth maxWidth="sm" open={this.state.dialog_open} onClose={this.handleClickCancel}>
+              <DialogTitle>Add Comment</DialogTitle>
+              <DialogContent>
+                {this.state.new_comment_error && (
+                  <Alert severity="error">
+                    {this.state.new_comment_error}
+                  </Alert>
+                )}
+            
+                <TextField 
+                  autoFocus
+                  id="new_comment"
+                  label="New Comment"
+                  value={this.state.new_comment_text}
+                  onChange={event => this.updateNewCommentText(event)}
+                  fullWidth
+                  sx={{mt: 2}}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={this.handleClickCancel}>Cancel</Button>
+                <Button onClick={this.handleClickSave}>Add Comment</Button>
+              </DialogActions>
+            </Dialog>
           </Grid>
         ))}
       </Grid>
