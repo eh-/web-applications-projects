@@ -44,6 +44,7 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 const processFormBody = multer({storage: multer.memoryStorage()}).single('uploadedphoto');
 const fs = require("fs");
+const cs142password = require("./cs142password");
 
 // Load the Mongoose schema for User, Photo, and SchemaInfo
 const User = require("./schema/user.js");
@@ -290,6 +291,11 @@ app.post("/admin/login", function(request, response){
       response.status(400).send("Login name doesn't exist");
       return;
     }
+    if(!cs142password.doesPasswordMatch(users[0].password_digest, users[0].salt, request.body.password)){
+      console.log("Credentials invalid");
+      response.status(400).send("Credentials invalid");
+      return;
+    }
     request.session.user_id = users[0]._id;
     request.session.first_name = users[0].first_name;
     response.send(JSON.stringify({
@@ -385,6 +391,7 @@ app.post("/user", function(request, response){
       response.status(400).send("Login name already in use");
       return;
     }
+    const pwd = cs142password.makePasswordEntry(request.body.password);
     User.create({
       first_name: request.body.first_name,
       last_name: request.body.last_name,
@@ -392,7 +399,8 @@ app.post("/user", function(request, response){
       description: request.body.description,
       occupation: request.body.occupation,
       login_name: request.body.login_name,
-      password: request.body.password,
+      salt: pwd.salt,
+      password_digest: pwd.hash,
     }).then(function(user_obj){
       response.status(200).send(JSON.stringify({login_name: user_obj.login_name}));
     }).catch(function(err){

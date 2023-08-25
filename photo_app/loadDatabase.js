@@ -22,6 +22,8 @@ mongoose.connect("mongodb://127.0.0.1/cs142project6", {
 // Get the magic models we used in the previous projects.
 const cs142models = require("./modelData/photoApp.js").cs142models;
 
+const cs142password = require("./cs142password");
+
 // Load the Mongoose schema for Use and Photo
 const User = require("./schema/user.js");
 const Photo = require("./schema/photo.js");
@@ -45,6 +47,7 @@ Promise.all(removePromises)
     const userModels = cs142models.userListModel();
     const mapFakeId2RealId = {};
     const userPromises = userModels.map(function (user) {
+      const pwd = cs142password.makePasswordEntry("weak");
       return User.create({
         first_name: user.first_name,
         last_name: user.last_name,
@@ -52,7 +55,8 @@ Promise.all(removePromises)
         description: user.description,
         occupation: user.occupation,
         login_name: user.last_name.toLowerCase(),
-        password: "weak",
+        salt: pwd.salt,
+        password_digest: pwd.hash,
       })
         .then(function (userObj) {
           // Set the unique ID of the object. We use the MongoDB generated _id
