@@ -45,8 +45,8 @@ class UserPhotos extends React.Component {
   }
 
   componentDidUpdate(prevProps){
-    if(prevProps.match.params.userId !== this.props.match.params.userId){
-      this.fetchUserPhotosInfo.call(this);
+    if(prevProps.match.params.userId !== this.props.match.params.userId || prevProps.uploaded_new_photo !== this.props.uploaded_new_photo){
+      this.fetchUserPhotosInfo();
     }
   }
 

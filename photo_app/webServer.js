@@ -42,6 +42,8 @@ const app = express();
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const multer = require("multer");
+const processFormBody = multer({storage: multer.memoryStorage()}).single('uploadedphoto');
+const fs = require("fs");
 
 // Load the Mongoose schema for User, Photo, and SchemaInfo
 const User = require("./schema/user.js");
@@ -338,6 +340,37 @@ app.post("/commentsOfPhoto/:photo_id", function(request, response){
         return;
       }
       response.status(200).send("Comment added");
+    });
+  });
+});
+
+
+app.post("/photos/new", processFormBody, function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  if(!request.file){
+    response.status(400).send("No file sent");
+    return;
+  }
+  console.log(request.file);
+  const timestamp = new Date().valueOf();
+  const filename = `U${String(timestamp)}${request.file.originalname}`;
+  fs.writeFile(`./images/${filename}`, request.file.buffer, function(err1){
+    if(err1){
+      response.status(500).send(JSON.stringify(err1));
+      return;
+    }
+    Photo.create({
+      file_name: filename,
+      user_id: request.session.user_id,
+      comments: [],
+    }).then(function(){
+      response.status(200).send("Upload successful");
+    }).catch(function(err2){
+      console.log(err2);
+      response.status(500).send(JSON.stringify(err2));
     });
   });
 });

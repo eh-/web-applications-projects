@@ -18,11 +18,13 @@ class PhotoShare extends React.Component {
       secondaryTitle: "",
       version: "",
       loggedInUser: null,
+      uploaded_new_photo: false,
     };
     
     this.changeSecondaryTitle = this.changeSecondaryTitle.bind(this);
     this.setLoggedInUser = this.setLoggedInUser.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
+    this.uploadedPhoto = this.uploadedPhoto.bind(this);
 
     axios.get("/test/info").then(response => {
       this.setState({version: response.data.version});
@@ -50,6 +52,10 @@ class PhotoShare extends React.Component {
     });
   }
 
+  uploadedPhoto(){
+    this.setState(prevState => ({uploaded_new_photo: !prevState.uploaded_new_photo}));
+  }
+
   render() {
     return (
       <HashRouter>
@@ -61,6 +67,7 @@ class PhotoShare extends React.Component {
                 version={this.state.version} 
                 loggedInUser={this.state.loggedInUser}
                 handleLogout={this.handleLogout}
+                uploadedPhoto={this.uploadedPhoto}
               />
             </Grid>
             <div className="cs142-main-topbar-buffer" />
