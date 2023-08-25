@@ -89,9 +89,9 @@ class TopBar extends React.Component {
             </Button>
           )}
           {this.props.secondaryTitle && (
-          <Typography variant="h5" color="inherit">
-            {this.props.secondaryTitle}
-          </Typography>
+            <Typography variant="h5" color="inherit">
+              {this.props.secondaryTitle}
+            </Typography>
           )}
         </Toolbar>
         <Dialog
