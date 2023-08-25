@@ -1,0 +1,28 @@
+/**
+ * CSS for the CS142 Project 4, Problem 2 States component.
+ * 
+ * Since CSS uses a global name space for classes we should use names starting
+ * with "cs142-states-" here.
+ */
+
+ body {
+    font-family: Tahoma;
+  }
+.cs142-states-result{
+  padding-left: 10px;
+  padding-right: 10px;
+  border: 1px dashed blue;
+  box-sizing: border-box;
+  width: fit-content;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px; 
+}
+
+.cs142-states-input-section{
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px; 
+}
