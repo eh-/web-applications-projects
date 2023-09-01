@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography } from "@mui/material";
+import { Typography, Box } from "@mui/material";
 import { Link } from "react-router-dom";
 
 import "./styles.css";
@@ -39,17 +39,51 @@ class UserDetail extends React.Component {
   render() {
     if(!this.state.currUser) return "";
     return (
-      <Typography variant="body1">
-        Name: {" "} {this.state.currUser.first_name + " " + this.state.currUser.last_name}
-        <br />
-        Location: {" "} {this.state.currUser.location}
-        <br />
-        Occupation: {" "} {this.state.currUser.occupation}
-        <br />
-        {this.state.currUser.description}
-        <br />
-        <Link to={`/photos/${this.state.currUser._id}`}>Photos</Link>
-      </Typography>
+      <Box>
+        <Typography variant="body1">
+          Name: {" "} {this.state.currUser.first_name + " " + this.state.currUser.last_name}
+          <br />
+          {this.state.currUser.location && (`Location: ${this.state.currUser.location}`)}
+          {this.state.currUser.location && (<br />)}
+          {this.state.currUser.occupation && (`Occupation: ${this.state.currUser.occupation}`)}
+          {this.state.currUser.occupation && (<br />)}
+          {this.state.currUser.description && (`${this.state.currUser.description}`)}
+          {this.state.currUser.description && (<br />)}
+
+          <Link to={`/photos/${this.state.currUser._id}`}>Photos</Link>
+          <br />
+        </Typography>
+        {this.state.currUser.most_recent_upload && (
+          <Box sx={{mt: 1}}>
+            <Typography variant="body1">
+              Recently Uploaded: {new Date(this.state.currUser.most_recent_upload.date_time).toDateString()}
+            </Typography>
+            <Box sx={{height: 50, width: 50}}>
+              <Link to={`/photos/${this.state.currUser._id}`}>
+                <img style={{ height: '100%'}} 
+                  src={`/images/${this.state.currUser.most_recent_upload.file_name}`}
+                />
+              </Link>
+            </Box>
+          </Box>
+        )}
+        
+        {this.state.currUser.most_comment_upload && (
+          <Box sx={{mt: 1}}>
+            <Typography variant="body1">
+              Most Comments: {this.state.currUser.most_comment_upload.comment_count}
+            </Typography>
+            <Box sx={{height: 50, width: 50}}>
+              <Link to={`/photos/${this.state.currUser._id}`}>
+                <img style={{ height: '100%'}} 
+                  src={`/images/${this.state.currUser.most_comment_upload.file_name}`}
+                />
+              </Link>
+            </Box>
+          </Box>
+        )}
+        
+      </Box>
     );
   }
 }

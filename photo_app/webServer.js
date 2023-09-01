@@ -220,8 +220,57 @@ app.get("/user/:id", function (request, response) {
       description: info[0].description,
       occupation: info[0].occupation,
     };
-    console.log("User found:", userInfo);
-    response.end(JSON.stringify(userInfo));
+    Photo.aggregate([
+      {$match: {
+        user_id: mongoose.Types.ObjectId(id),
+      }},
+      {$sort: {
+        date_time: -1,
+      }},
+      {$limit: 1}
+    ], function(err2, info2){
+      if(err2){
+        response.status(500).send(JSON.stringify(err2));
+        return;
+      }
+      console.log(info2);
+      if(info2.length !== 0){
+        userInfo.most_recent_upload = {
+          file_name: info2[0].file_name,
+          date_time: info2[0].date_time,
+        };
+      }
+      Photo.aggregate([
+        {$match: {
+          user_id: mongoose.Types.ObjectId(id),
+        }},
+        {$unwind: "$comments"},
+        {$group: {
+          _id: {
+            id: "$_id",
+            file_name: "$file_name",
+          },
+          comment_count: {$sum : 1}
+        }},
+        {$sort: {comment_count: -1}},
+        {$limit: 1}
+      ], function(err3, info3){
+        if(err3){
+          response.status(500).send(JSON.stringify(err3));
+        return;
+        }
+        console.log(info3);
+        if(info3.length !== 0){
+          userInfo.most_comment_upload = {
+            file_name: info3[0]._id.file_name,
+            comment_count: info3[0].comment_count,
+          };
+        }
+        console.log("User found:", userInfo);
+        response.end(JSON.stringify(userInfo));
+      });
+    });
+    
   });
 });
 
