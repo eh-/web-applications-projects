@@ -181,6 +181,7 @@ app.get("/user/list", function (request, response) {
         _id: info[i]._id.toString(),
         first_name: info[i].first_name,
         last_name: info[i].last_name,
+        login_name: info[i].login_name,
       });
     }
     console.log("User List:", userList);
@@ -212,7 +213,7 @@ app.get("/user/:id", function (request, response) {
       response.status(400).send("User not found");
       return;
     }
-    const userInfo = {
+    const response_object = {
       _id: info[0]._id.toString(),
       first_name: info[0].first_name,
       last_name: info[0].last_name,
@@ -220,57 +221,121 @@ app.get("/user/:id", function (request, response) {
       description: info[0].description,
       occupation: info[0].occupation,
     };
-    Photo.aggregate([
-      {$match: {
-        user_id: mongoose.Types.ObjectId(id),
-      }},
-      {$sort: {
-        date_time: -1,
-      }},
-      {$limit: 1}
-    ], function(err2, info2){
-      if(err2){
-        response.status(500).send(JSON.stringify(err2));
-        return;
+    console.log("User found:", response_object);
+    response.end(JSON.stringify(response_object));
+  });
+});
+
+/**
+ * URL /mostRecentPhoto/:id - Returns most recent photo of user (id)
+ */
+app.get("/mostRecentPhoto/:id", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  const id = request.params.id;
+  Photo.aggregate([
+    {$match: {
+      user_id: mongoose.Types.ObjectId(id),
+    }},
+    {$sort: {
+      date_time: -1,
+    }},
+    {$limit: 1}
+  ], function(err, recent_photo){
+    if(err){
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    let response_object = null;
+    if(recent_photo.length !== 0){
+      response_object = {
+        file_name: recent_photo[0].file_name,
+        date_time: recent_photo[0].date_time,
+      };
+    }
+    console.log("Most Recent Photo:", response_object);
+    response.end(JSON.stringify(response_object));
+  });
+});
+
+/**
+ * URL /mostCommentPhoto/:id - Returns photo with most comments of user (id)
+ */
+app.get("/mostCommentPhoto/:id", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  const id = request.params.id;
+  Photo.aggregate([
+    {$match: {
+      user_id: mongoose.Types.ObjectId(id),
+    }},
+    {$unwind: "$comments"},
+    {$group: {
+      _id: {
+        id: "$_id",
+        file_name: "$file_name",
+      },
+      comment_count: {$sum : 1}
+    }},
+    {$sort: {comment_count: -1}},
+    {$limit: 1}
+  ], function(err, most_comment_photo){
+    if(err){
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    let response_object = null;
+    if(most_comment_photo.length !== 0){
+      response_object = {
+        file_name: most_comment_photo[0]._id.file_name,
+        comment_count: most_comment_photo[0].comment_count,
+      };
+    }
+    console.log("Most Comment Photo:", response_object);
+    response.end(JSON.stringify(response_object));
+  });
+});
+
+/**
+ * URL /mentionPhotos/:id - Returns photo with most comments of user (id)
+ */
+app.get("/mentionPhotos/:id", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  const id = request.params.id;
+  const matching_regex = new RegExp(`@\\[([^\\]]+)\\]\\((${id})\\)`, "g");
+  Photo.aggregate([
+    {$match: {
+      "comments.comment": {
+        $regex: matching_regex,
       }
-      console.log(info2);
-      if(info2.length !== 0){
-        userInfo.most_recent_upload = {
-          file_name: info2[0].file_name,
-          date_time: info2[0].date_time,
-        };
-      }
-      Photo.aggregate([
-        {$match: {
-          user_id: mongoose.Types.ObjectId(id),
-        }},
-        {$unwind: "$comments"},
-        {$group: {
-          _id: {
-            id: "$_id",
-            file_name: "$file_name",
-          },
-          comment_count: {$sum : 1}
-        }},
-        {$sort: {comment_count: -1}},
-        {$limit: 1}
-      ], function(err3, info3){
-        if(err3){
-          response.status(500).send(JSON.stringify(err3));
-        return;
-        }
-        console.log(info3);
-        if(info3.length !== 0){
-          userInfo.most_comment_upload = {
-            file_name: info3[0]._id.file_name,
-            comment_count: info3[0].comment_count,
-          };
-        }
-        console.log("User found:", userInfo);
-        response.end(JSON.stringify(userInfo));
-      });
-    });
-    
+    }},
+    {$lookup: {
+      from: "users",
+      localField: "user_id",
+      foreignField: "_id",
+      as: "user_info",
+    }},
+    {$project: {
+      file_name: 1,
+      uploader_id: {$first: "$user_info._id"},
+      uploader_first_name: {$first: "$user_info.first_name"},
+      uploader_last_name: {$first: "$user_info.last_name"},
+    }}
+  ], function(err, mentions){
+    if(err){
+      console.log(err);
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    console.log("Mentions found", mentions);
+    response.end(JSON.stringify(mentions));
   });
 });
 
@@ -339,6 +404,9 @@ app.get("/photosOfUser/:id", function (request, response) {
   });
 });
 
+/**
+ * URL /admin/login - verifies user login info and logs user in  
+ */
 app.post("/admin/login", function(request, response){
   User.find({login_name: request.body.login_name}, function(err, users){
     if(err){
@@ -365,6 +433,9 @@ app.post("/admin/login", function(request, response){
   });
 });
 
+/**
+ * URL /admin/logout - logs user out 
+ */
 app.post("/admin/logout", function(request, response){
   if(request.session.user_id === undefined){
     response.status(400).send("No user logged in");
@@ -380,6 +451,9 @@ app.post("/admin/logout", function(request, response){
   });
 });
 
+/**
+ * URL /commentsOfPhoto/:photo_id - adds a new comment to photo photo_id
+ */
 app.post("/commentsOfPhoto/:photo_id", function(request, response){
   if(request.session.user_id === undefined){
     response.status(401).send("Unauthorized");
@@ -410,7 +484,9 @@ app.post("/commentsOfPhoto/:photo_id", function(request, response){
   });
 });
 
-
+/**
+ * URL /photos/new - adds a new photo
+ */
 app.post("/photos/new", processFormBody, function(request, response){
   if(request.session.user_id === undefined){
     response.status(401).send("Unauthorized");
@@ -441,6 +517,9 @@ app.post("/photos/new", processFormBody, function(request, response){
   });
 });
 
+/**
+ * URL /user - create new user
+ */
 app.post("/user", function(request, response){
   if(request.body.login_name === ""){
     response.status(400).send("Missing required fields");

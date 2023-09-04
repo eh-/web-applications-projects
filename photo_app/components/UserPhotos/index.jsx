@@ -10,10 +10,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  TextField,
   DialogActions,
   Alert,
 } from "@mui/material";
+import { MentionsInput, Mention } from 'react-mentions';
 import { Link } from "react-router-dom";
 
 import "./styles.css";
@@ -33,6 +33,7 @@ class UserPhotos extends React.Component {
       photo_id_dialog: null,
       new_comment_text: "",
       new_comment_error: "",
+      user_list: [],
     };
 
     this.fetchUserPhotosInfo = this.fetchUserPhotosInfo.bind(this);
@@ -40,6 +41,8 @@ class UserPhotos extends React.Component {
     this.handleClickCancel = this.handleClickCancel.bind(this);
     this.handleClickSave = this.handleClickSave.bind(this);
     this.updateNewCommentText = this.updateNewCommentText.bind(this);
+
+    this.mention_regex = /@\[([^\]]+)\]\(([^)]+)\)/g;
     
     this.fetchUserPhotosInfo();
   }
@@ -53,18 +56,29 @@ class UserPhotos extends React.Component {
   fetchUserPhotosInfo(){
     axios.get(`/photosOfUser/${this.props.match.params.userId}`).then(photos => {
       axios.get(`/user/${this.props.match.params.userId}`).then(user => {
-        this.setState({photosOfUser: photos.data, userInfo: user.data}, () => {
-          if(this.state.userInfo){
-            this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
-          }
+        axios.get(`/user/list`).then(users => {
+          const mentions_list = users.data.map((u) => {
+            return {
+              id: u._id,
+              display: `${u.first_name} ${u.last_name}`
+            };
+          });
+          this.setState({photosOfUser: photos.data, userInfo: user.data, user_list: mentions_list}, () => {
+            if(this.state.userInfo){
+              this.props.changeSecondaryTitle(`Photos Of ${this.state.userInfo.first_name} ${this.state.userInfo.last_name}`);
+            }
+          });
+        }).catch(err => {
+          console.log(`${err.response.status}: ${err.response.data}`);
+          this.setState({photosOfUser: null, userInfo: null, user_list: []});
         });
       }).catch(err => {
         console.log(`${err.response.status}: ${err.response.data}`);
-        this.setState({photosOfUser: null, userInfo: null});
+        this.setState({photosOfUser: null, userInfo: null, user_list: []});
       });
     }).catch(err => {
       console.log(`${err.response.status}: ${err.response.data}`);
-      this.setState({photosOfUser: null, userInfo: null});
+      this.setState({photosOfUser: null, userInfo: null, user_list: []});
     });
   }
 
@@ -117,7 +131,7 @@ class UserPhotos extends React.Component {
                         </Link>
                       </Grid>
                       <Grid item xs={8}>
-                        {comment.comment}
+                        {comment.comment.replace(this.mention_regex, '@$1')}
                       </Grid>
                     </Grid>
                   ))}
@@ -136,7 +150,7 @@ class UserPhotos extends React.Component {
                   </Alert>
                 )}
             
-                <TextField 
+                {/* <TextField 
                   autoFocus
                   id="new_comment"
                   label="New Comment"
@@ -144,7 +158,22 @@ class UserPhotos extends React.Component {
                   onChange={event => this.updateNewCommentText(event)}
                   fullWidth
                   sx={{mt: 2}}
-                />
+                /> */}
+                <MentionsInput
+                  value={this.state.new_comment_text}
+                  onChange={event => this.updateNewCommentText(event)}
+                  placeholder={"Add comment"}
+                  style={{
+                    height: 70,
+                  }}
+                >
+                  <Mention
+                    trigger="@"
+                    data={this.state.user_list}
+                    displayTransform={(id, display) => `@${display}`}
+                    appendSpaceOnAdd
+                  />
+                </MentionsInput>
               </DialogContent>
               <DialogActions>
                 <Button onClick={this.handleClickCancel}>Cancel</Button>
