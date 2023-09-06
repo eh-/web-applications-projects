@@ -1,5 +1,14 @@
 import React from "react";
-import { Typography, Box } from "@mui/material";
+import { 
+  Typography, 
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+} from "@mui/material";
 import { Link } from "react-router-dom";
 
 import "./styles.css";
@@ -16,12 +25,19 @@ class UserDetail extends React.Component {
       most_recent_photo: null,
       most_comment_photo: null,
       mentions: [],
+      delete_user_id: null,
+      delete_user_id_error: "",
     };
+
+    this.handleOpenDeleteAccountDialog = this.handleOpenDeleteAccountDialog.bind(this);
+    this.handleCancelDeleteAccountDialog = this.handleCancelDeleteAccountDialog.bind(this);
+    this.handleConfirmDeleteAccountDialog = this.handleConfirmDeleteAccountDialog.bind(this);
+
     this.fetchUserDetails.call(this);
   }
 
   componentDidUpdate(prevProps){
-    if(prevProps.match.params.userId !== this.props.match.params.userId){
+    if(prevProps.match.params.userId !== this.props.match.params.userId || prevProps.uploaded_new_photo !== this.props.uploaded_new_photo){
       this.fetchUserDetails.call(this);
     }
   }
@@ -74,6 +90,23 @@ class UserDetail extends React.Component {
         most_comment_photo: null,
         mentions: [],
       });
+    });
+  }
+
+  handleOpenDeleteAccountDialog(user_id){
+    this.setState({delete_user_id: user_id, delete_user_id_error: ""});
+  }
+
+  handleCancelDeleteAccountDialog(){
+    this.setState({delete_user_id: null, delete_user_id_error: ""});
+  }
+
+  handleConfirmDeleteAccountDialog(){
+    axios.post(`/deleteUser`, {user_id: this.state.delete_user_id}).then(() => {
+      this.props.handleLogout();
+    }).catch(err => {
+      console.log(`${err.response.status}: ${err.response.data}`);
+      this.setState({delete_user_id_error: err.response.data});
     });
   }
 
@@ -153,7 +186,28 @@ class UserDetail extends React.Component {
             </Typography>
           </Box>
         )}
-        
+        {this.props.loggedInUser._id === this.state.currUser._id && (
+          <Button variant="outlined" onClick={() => this.handleOpenDeleteAccountDialog(this.state.currUser._id)} sx={{mt: 2}}>
+            Delete Account
+          </Button>
+        )}
+        <Dialog open={this.state.delete_user_id !== null} onClose={this.handleCancelDeleteAccountDialog}>
+          <DialogTitle>Delete Account</DialogTitle>
+          <DialogContent>
+            {this.state.delete_user_id_error && (
+              <Alert severity="error">
+                {this.state.delete_user_id_error}
+              </Alert>
+            )}
+            <Alert severity="warning" sx={{mt: 1}}>
+              Deleting your account is permanent. Do you want to continue?
+            </Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.handleCancelDeleteAccountDialog}>Cancel</Button>
+            <Button onClick={this.handleConfirmDeleteAccountDialog}>Confirm</Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   }

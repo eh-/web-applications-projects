@@ -485,6 +485,48 @@ app.post("/commentsOfPhoto/:photo_id", function(request, response){
 });
 
 /**
+ * URL /removeComment - removes comment with id in body
+ */
+app.post("/removeComment", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  if(!request.body.comment_id){
+    response.status(400).send("Missing comment id to remove");
+    return;
+  }
+  console.log(request.body.comment_id);
+  Photo.aggregate([
+    {$unwind: "$comments"},
+    {$match: {
+      "comments._id": mongoose.Types.ObjectId(request.body.comment_id),
+    }}
+  ], function(err, photo_with_comment){
+    if(err){
+      response.status(500).send(JSON.stringify(err));
+      return;
+    }
+    if(photo_with_comment.length === 0){
+      response.status(500).send("Can't find photo with comment to delete");
+      return;
+    }
+    if(photo_with_comment[0].comments.user_id.toHexString() !== request.session.user_id){
+      response.status(400).send("Comment doesn't belong to user");
+      return;
+    }
+
+    Photo.updateOne({_id: photo_with_comment[0]._id}, {$pull: {comments: {_id: request.body.comment_id}}}, function(remove_comment_err){
+      if(remove_comment_err){
+        response.status(500).send(JSON.stringify(remove_comment_err));
+        return;
+      }
+      response.status(200).send("Removed Comment");
+    });
+  });
+});
+
+/**
  * URL /photos/new - adds a new photo
  */
 app.post("/photos/new", processFormBody, function(request, response){
@@ -518,6 +560,33 @@ app.post("/photos/new", processFormBody, function(request, response){
 });
 
 /**
+ * URL /removePhoto - removes a photo of photo_id
+ */
+app.post("/removePhoto", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  if(!request.body.photo_id){
+    response.status(400).send("Missing photo id to remove");
+    return;
+  }
+  Photo.findById(request.body.photo_id).then(function(photo){
+    if(photo.user_id.toHexString() !== request.session.user_id){
+      response.status(400).send("Photo doesn't belong to user");
+      return;
+    }
+    Photo.deleteOne({_id: request.body.photo_id}).then(function(){
+      response.status(200).send("Removed Photo");
+    }).catch(function(err){
+      response.status(500).send(JSON.stringify(err));
+    });
+  }).catch(function(err){
+    response.status(500).send(JSON.stringify(err));
+  });
+});
+
+/**
  * URL /user - create new user
  */
 app.post("/user", function(request, response){
@@ -542,6 +611,73 @@ app.post("/user", function(request, response){
       password_digest: pwd.hash,
     }).then(function(user_obj){
       response.status(200).send(JSON.stringify({login_name: user_obj.login_name}));
+    }).catch(function(err){
+      response.status(500).send(JSON.stringify(err));
+    });
+  }).catch(function(err){
+    response.status(500).send(JSON.stringify(err));
+  });
+});
+
+app.post("/deleteUser", function(request, response){
+  if(request.session.user_id === undefined){
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  if(!request.body.user_id){
+    response.status(400).send("Missing user id to remove");
+    return;
+  }
+  if(request.session.user_id !== request.body.user_id){
+    response.status(400).send("User can't delete this account");
+    return;
+  }
+  User.findById(request.body.user_id).then(function(user_found){
+    if(!user_found){
+      response.status(400).send("User doesn't exist");
+      return;
+    }
+    Photo.deleteMany({user_id: request.body.user_id}).then(function(){
+      Photo.updateMany({}, {$pull: {comments: {user_id: request.body.user_id}}}).then(function(){
+        Photo.updateMany({
+          "comments.comment": {
+            $regex: `@\\[${user_found.first_name} ${user_found.last_name}\\]\\(${user_found._id}\\)`
+          }
+        }, 
+        [{
+          $set: {
+            comments: {
+              $map: {
+                input: "$comments",
+                in: {
+                  $mergeObjects: [
+                    "$$this", 
+                    {comment: {
+                      $replaceAll: {
+                        input: "$$this.comment",
+                        find: `@[${user_found.first_name} ${user_found.last_name}](${user_found._id})`,
+                        replacement: "[Deleted User]",
+                      }
+                    }}
+                  ]
+                }
+              }
+            }
+          }
+        }]).then(function(){
+          User.deleteOne({_id: request.body.user_id}).then(function(){
+            response.status(200).send("Deleted Account");
+          }).catch(function(err){
+            console.log(err);
+            response.status(500).send(JSON.stringify(err));
+          });
+        }).catch(function(err){
+          console.log(err);
+          response.status(500).send(JSON.stringify(err));
+        });
+      }).catch(function(err){
+        response.status(500).send(JSON.stringify(err));
+      });
     }).catch(function(err){
       response.status(500).send(JSON.stringify(err));
     });

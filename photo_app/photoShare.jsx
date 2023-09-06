@@ -35,7 +35,7 @@ class PhotoShare extends React.Component {
         });
       }
       else{
-        this.setState({version: response.data.version});
+        this.setState({version: response.data.version, loggedInUser: null});
       }
     }).catch(error => {
       console.log(error.message);
@@ -52,7 +52,9 @@ class PhotoShare extends React.Component {
   }
 
   handleLogout(event){
-    event.preventDefault();
+    if(event){
+      event.preventDefault();
+    }
     axios.post("/admin/logout").then(() => {
       this.setLoggedInUser(null);
     }).catch(err => {
@@ -110,14 +112,29 @@ class PhotoShare extends React.Component {
                   {this.state.loggedInUser ? (
                     <Route
                       path="/users/:userId"
-                      render={(props) => <UserDetail {...props} changeSecondaryTitle={this.changeSecondaryTitle} />}
+                      render={(props) => (
+                        <UserDetail 
+                          {...props} 
+                          changeSecondaryTitle={this.changeSecondaryTitle} 
+                          loggedInUser={this.state.loggedInUser}
+                          handleLogout={this.handleLogout}
+                          uploaded_new_photo={this.state.uploaded_new_photo}
+                        />
+                      )}
                     />
                   ): 
                     <Redirect path="/users/:userId" to="/login-register"/>}
                   {this.state.loggedInUser ? (
                     <Route
                       path="/photos/:userId"
-                      render={(props) => <UserPhotos {...props} changeSecondaryTitle={this.changeSecondaryTitle} uploaded_new_photo={this.state.uploaded_new_photo}/>}
+                      render={(props) => (
+                        <UserPhotos 
+                          {...props} 
+                          changeSecondaryTitle={this.changeSecondaryTitle} 
+                          uploaded_new_photo={this.state.uploaded_new_photo}
+                          loggedInUser={this.state.loggedInUser} 
+                        />
+                      )}
                     />
                   ):
                     <Redirect path="/photos/:userId" to="/login-register"/>}
@@ -125,10 +142,10 @@ class PhotoShare extends React.Component {
                     <Route
                       path="/users"
                       render={(props) => (
-                      <UserList 
-                        {...props} 
-                        changeSecondaryTitle={this.changeSecondaryTitle}  
-                      />
+                        <UserList 
+                          {...props} 
+                          changeSecondaryTitle={this.changeSecondaryTitle} 
+                        />
                       )}
                     />
                   ):
